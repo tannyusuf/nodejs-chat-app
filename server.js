@@ -7,20 +7,25 @@ const clients = [];
 
 server.on("connection", (socket) => {
   const clientID = clients.length + 1;
-  console.log("A new connection to the server User id is", clientID);
-
-  clients.map((client) => {
-    client.socket.write(`> The new user is joined with id: ${clientID}`);
-    //add data to txt file
-  });
+  let username = "";
 
   socket.write(`id-${clientID}`);
   socket.on("data", (data) => {
     const dataString = data.toString("utf-8");
+    if (dataString.startsWith("username-")) {
+      username = dataString.replace("username-", "").trim();
+
+      clients.forEach((client) => {
+        client.socket.write(`${username} is joined with id: ${clientID}`);
+      });
+
+      return;
+    }
+
     const id = dataString.substring(0, dataString.indexOf("-"));
     const message = dataString.substring(dataString.indexOf("-message-") + 9);
     clients.map((client) => {
-      client.socket.write(`> User ${id}: ${message}`);
+      client.socket.write(`> ${username} (ID: ${id}): ${message}`);
       //add data to txt file
     });
   });

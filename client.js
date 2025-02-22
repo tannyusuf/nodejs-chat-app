@@ -1,6 +1,8 @@
 const { rejects } = require("assert");
+const { log } = require("console");
 const net = require("net");
 const { resolve } = require("path");
+const { exit } = require("process");
 
 const readline = require("readline/promises");
 
@@ -25,6 +27,7 @@ const moveCursor = (dx, dy) => {
 };
 
 let id;
+let username = "";
 
 const socket = net.createConnection(
   {
@@ -33,6 +36,13 @@ const socket = net.createConnection(
   },
 
   async () => {
+    const askUsername = async () => {
+      username += await rl.question("\nPlease enter your username > ");
+    };
+    await askUsername();
+
+    socket.write(`username-${username}`);
+
     const ask = async () => {
       const message = await rl.question("Enter a message > ");
       //move the curser one line up
@@ -54,7 +64,7 @@ const socket = net.createConnection(
         //Everything from the third char up until the end
         id = data.toString("utf-8").substring(3);
 
-        console.log(`Your id is ${id}! Welcome!\n `);
+        console.log(`\nYour id is ${id}! Welcome ${username}!`);
       } else {
         //When we are getting the message..
 
@@ -62,6 +72,17 @@ const socket = net.createConnection(
       }
 
       ask();
+    });
+
+    socket.on("error", (err) => {
+      if (err.code === "ECONNRESET") {
+        console.log("\n");
+        console.log("------------------");
+        console.log("Server is down.");
+        console.log("------------------");
+        console.log("\n");
+        process.exit(0);
+      }
     });
   }
 );
